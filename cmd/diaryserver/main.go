@@ -24,24 +24,7 @@ func main() {
 	log.Info("starting diary server", slog.String("env", cfg.Env))
 	log.Debug("debug messages are enabled")
 
-	absolutePath, err := filepath.Abs(cfg.StoragePath)
-	if err != nil {
-		log.Debug("error in getting absolute path", "error", err)
-	} else {
-		log.Debug(cfg.StoragePath, "absolute path", absolutePath)
-	}
-	storage, err := sqlite.New(cfg.StoragePath)
-	if err != nil {
-		log.Error("failed to init storage", "error", err)
-		os.Exit(1)
-	}
-	storage.AddUsers([]sqlite.User{
-		{Username: "user1", Email: "user1@example.com", PasswordHash: "password1"},
-		{Username: "user2", Email: "user2@example.com", PasswordHash: "password2"},
-		{Username: "user3", Email: "user3@example.com", PasswordHash: "password3"},
-		{Username: "user4", Email: "user4@example.com", PasswordHash: "password4"},
-		{Username: "user5", Email: "user5@example.com", PasswordHash: "password5"},
-	})
+	storage := InitStorage(cfg, log)
 	// TODO: init router
 	router := router.SetupRouter(storage, log)
 	// TODO: run server
@@ -71,4 +54,18 @@ func SetupLogger(env string) *slog.Logger {
 		)
 	}
 	return log
+}
+func InitStorage(cfg *config.Config, log *slog.Logger) *sqlite.Storage {
+	absolutePath, err := filepath.Abs(cfg.StoragePath)
+	if err != nil {
+		log.Debug("error in getting absolute path", "error", err)
+	} else {
+		log.Debug(cfg.StoragePath, "absolute path", absolutePath)
+	}
+	storage, err := sqlite.New(cfg.StoragePath)
+	if err != nil {
+		log.Error("failed to init storage", "error", err)
+		os.Exit(1)
+	}
+	return storage
 }
