@@ -20,6 +20,10 @@ type SetInfo struct {
 func (s *Storage) AddSet(set Set) error {
 	const op = "storage.sqlite.AddSet"
 
+	if set.WorkoutExerciseID == 0 {
+		return fmt.Errorf("%s: workout exercise ID is required", op)
+	}
+
 	query := `INSERT INTO sets (workout_exercise_id, repetitions, weight) VALUES (?, ?, ?)`
 
 	_, err := s.db.Exec(query, set.WorkoutExerciseID, set.Repetitions, set.Weight)
@@ -47,6 +51,9 @@ func (s *Storage) AddSets(sets []Set) error {
 	defer stmt.Close()
 
 	for _, set := range sets {
+		if set.WorkoutExerciseID == 0 {
+			return fmt.Errorf("%s: workout exercise ID is required", op)
+		}
 		_, err := stmt.Exec(set.WorkoutExerciseID, set.Repetitions, set.Weight)
 		if err != nil {
 			return fmt.Errorf("%s: failed to add set: %w", op, err)

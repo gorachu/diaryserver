@@ -18,6 +18,9 @@ type WorkoutExerciseInfo struct {
 
 func (s *Storage) AddWorkoutExercise(workoutExercise WorkoutExercise) error {
 	const op = "storage.sqlite.AddWorkoutExercise"
+	if workoutExercise.WorkoutID == 0 || workoutExercise.ExerciseID == 0 {
+		return fmt.Errorf("%s: workout ID or exercise ID is required", op)
+	}
 	query := `INSERT INTO workout_exercises (workout_id, exercise_id) VALUES (?, ?)`
 
 	_, err := s.db.Exec(query, workoutExercise.WorkoutID, workoutExercise.ExerciseID)
@@ -45,6 +48,9 @@ func (s *Storage) AddWorkoutExercises(workoutExercises []WorkoutExercise) error 
 	defer stmt.Close()
 
 	for _, workoutExercise := range workoutExercises {
+		if workoutExercise.WorkoutID == 0 || workoutExercise.ExerciseID == 0 {
+			return fmt.Errorf("%s: workout ID or exercise ID is required", op)
+		}
 		_, err := stmt.Exec(workoutExercise.WorkoutID, workoutExercise.ExerciseID)
 		if err != nil {
 			return fmt.Errorf("%s: failed to add workout exercise: %w", op, err)

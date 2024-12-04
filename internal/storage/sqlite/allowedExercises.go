@@ -14,6 +14,9 @@ type AllowedExerciseInfo struct {
 
 func (s *Storage) AddAllowedExercise(exercise AllowedExercise) error {
 	const op = "storage.sqlite.AddAllowedExercise"
+	if exercise.Name == "" {
+		return fmt.Errorf("%s: name is required", op)
+	}
 	query := `INSERT INTO allowed_exercises (name, description) VALUES (?, ?)`
 
 	_, err := s.db.Exec(query, exercise.Name, exercise.Description)
@@ -40,6 +43,9 @@ func (s *Storage) AddAllowedExercises(exercises []AllowedExercise) error {
 	defer stmt.Close()
 
 	for _, exercise := range exercises {
+		if exercise.Name == "" {
+			return fmt.Errorf("%s: name is required", op)
+		}
 		_, err := stmt.Exec(exercise.Name, exercise.Description)
 		if err != nil {
 			return fmt.Errorf("%s: failed to add exercise %s: %w", op, exercise.Name, err)
