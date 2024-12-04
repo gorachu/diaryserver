@@ -31,7 +31,10 @@ func SetupRouter(storage *sqlite.Storage, log *slog.Logger) *gin.Engine {
 	{
 		users.GET("", handlers.NewHandlers(storage, log).GetUsers)
 		users.GET("/:username", handlers.NewHandlers(storage, log).GetUser)
-		users.POST("", handlers.NewHandlers(storage, log).CreateUser)
+		users.POST("/user", handlers.NewHandlers(storage, log).CreateUser)
+		users.POST("", handlers.NewHandlers(storage, log).CreateUsers)
+		users.DELETE("", handlers.NewHandlers(storage, log).DeleteAllUsers)
+		users.DELETE("/:username", handlers.NewHandlers(storage, log).DeleteUser)
 	}
 
 	return r

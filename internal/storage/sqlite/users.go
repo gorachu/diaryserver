@@ -99,6 +99,14 @@ func (s *Storage) DeleteUsers(usernames []string) error {
 	}
 	return nil
 }
+func (s *Storage) DeleteAllUsers() error {
+	const op = "storage.sqlite.DeleteAllUsers"
+	query := `DELETE FROM users`
+	if _, err := s.db.Exec(query); err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	return nil
+}
 
 func (s *Storage) GetUser(username string) (*UserInfo, error) {
 	const op = "storage.sqlite.GetUser"
