@@ -2,6 +2,7 @@ package router
 
 import (
 	"diaryserver/internal/router/handlers"
+	"diaryserver/internal/service"
 	"diaryserver/internal/storage/sqlite"
 	"log/slog"
 	"time"
@@ -9,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter(storage *sqlite.Storage, log *slog.Logger) *gin.Engine {
+func SetupRouter(storage *sqlite.Storage, log *slog.Logger, accessSecret, refreshSecret string) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(func(c *gin.Context) {
@@ -36,6 +37,9 @@ func SetupRouter(storage *sqlite.Storage, log *slog.Logger) *gin.Engine {
 		users.DELETE("", handlers.NewHandlers(storage, log).DeleteAllUsers)
 		users.DELETE("/:username", handlers.NewHandlers(storage, log).DeleteUser)
 	}
-
+	login := r.Group("/login")
+	{
+		login.POST("", service.NewAuthService(storage, accessSecret, refreshSecret).Login)
+	}
 	return r
 }

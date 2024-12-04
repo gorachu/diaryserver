@@ -26,7 +26,7 @@ func main() {
 
 	storage := InitStorage(cfg, log)
 	// TODO: init router
-	router := router.SetupRouter(storage, log)
+	router := router.SetupRouter(storage, log, "accessSecret", "refreshSecret")
 	// TODO: run server
 	log.Info("stating server", slog.String("address", cfg.HTTPServer.Address))
 	if err := router.Run(cfg.HTTPServer.Address); err != nil {
