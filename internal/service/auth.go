@@ -16,13 +16,13 @@ type AuthService struct {
 	refreshTTL    time.Duration
 }
 
-func NewAuthService(storage *sqlite.Storage, accessSecret, refreshSecret string) *AuthService {
+func NewAuthService(storage *sqlite.Storage, accessSecret, refreshSecret string, accessTTL, refreshTTL time.Duration) *AuthService {
 	return &AuthService{
 		storage:       storage,
 		accessSecret:  accessSecret,
 		refreshSecret: refreshSecret,
-		accessTTL:     15 * time.Minute,
-		refreshTTL:    72 * time.Hour,
+		accessTTL:     accessTTL,
+		refreshTTL:    refreshTTL,
 	}
 }
 
