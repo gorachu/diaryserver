@@ -35,7 +35,7 @@ func SetupRouter(storage *sqlite.Storage, log *slog.Logger, cfg *config.Config) 
 	corsConfig := cors.Config{
 		AllowOrigins:     []string{"https://localhost:3000"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With", "Access-Control-Allow-Origin", "Access-Control-Allow-Methods", "Access-Control-Allow-Headers", "Access-Control-Allow-Credentials"},
 		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
 		AllowCredentials: true,
 		MaxAge:           24 * time.Hour,
@@ -45,7 +45,7 @@ func SetupRouter(storage *sqlite.Storage, log *slog.Logger, cfg *config.Config) 
 		if c.Request.Method == "OPTIONS" {
 			c.Header("Access-Control-Allow-Origin", "https://localhost:3000")
 			c.Header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
-			c.Header("Access-Control-Allow-Headers", "Origin,Content-Type,Accept,Authorization,X-Requested-With")
+			c.Header("Access-Control-Allow-Headers", "Origin,Content-Type,Accept,Authorization,X-Requested-With,Access-Control-Allow-Origin,Access-Control-Allow-Methods,Access-Control-Allow-Headers,Access-Control-Allow-Credentials")
 			c.Header("Access-Control-Allow-Credentials", "true")
 			c.Status(204)
 			return

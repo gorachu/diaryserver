@@ -64,7 +64,7 @@ func (AuthService *AuthService) Login(c *gin.Context) {
 	c.SetCookie(
 		"access_token",
 		accessToken,
-		int(c.MustGet("cfg").(config.Config).JWT.AccessTokenTTL.Seconds()), // время жизни в секундах
+		int(c.MustGet("cfg").(*config.Config).JWT.AccessTokenTTL.Seconds()), // время жизни в секундах
 		"/",
 		"",   // домен
 		true, // secure flag (только HTTPS)
@@ -74,7 +74,7 @@ func (AuthService *AuthService) Login(c *gin.Context) {
 	c.SetCookie(
 		"refresh_token",
 		refreshToken,
-		int(c.MustGet("cfg").(config.Config).JWT.RefreshTokenTTL.Seconds()), // время жизни в секундах
+		int(c.MustGet("cfg").(*config.Config).JWT.RefreshTokenTTL.Seconds()), // время жизни в секундах
 		"/",
 		"",   // домен
 		true, // secure flag (только HTTPS)
