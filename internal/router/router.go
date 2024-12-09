@@ -22,6 +22,7 @@ func SetupRouter(storage *sqlite.Storage, log *slog.Logger, cfg *config.Config) 
 			slog.String("client_ip", c.ClientIP()),
 		)
 		c.Set("logger", reqLogger)
+		c.Set("db", storage)
 		start := time.Now()
 		c.Next()
 		reqLogger.Info("request completed",
