@@ -17,7 +17,7 @@ type Config struct {
 }
 
 type HTTPServer struct {
-	Address     string        `yaml:"address" env-default:"localhost:8080"`
+	Address     string        `yaml:"address" env-default:"localhost:8443"`
 	Timeout     time.Duration `yaml:"timeout" env-default:"4s"`
 	IdleTimeout time.Duration `yaml:"idle_timeout" env-default:"60s"`
 }
@@ -32,7 +32,7 @@ type JWT struct {
 type TLS struct {
 	PathToCert string `yaml:"path_to_cert" env-required:"true"`
 	PathToKey  string `yaml:"path_to_key" env-required:"true"`
-	Port       string `yaml:"port" env-default:":8082"`
+	Port       string `yaml:"port" env-default:":8443"`
 }
 
 func MustLoad() *Config {

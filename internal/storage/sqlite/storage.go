@@ -60,11 +60,20 @@ func New(storagePath string) (*Storage, error) {
 			FOREIGN KEY (workout_exercise_id) REFERENCES workout_exercises(workout_exercise_id) ON DELETE CASCADE
 		);`,
 
+		`CREATE TABLE IF NOT EXISTS blacklisted_tokens (
+			token_id INTEGER PRIMARY KEY AUTOINCREMENT,
+			token TEXT NOT NULL UNIQUE,
+			expiration_time DATETIME NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		);`,
+
 		`CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);`,
 		`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);`,
 		`CREATE INDEX IF NOT EXISTS idx_workouts_user_id ON workouts(user_id);`,
 		`CREATE INDEX IF NOT EXISTS idx_workout_exercises_workout_id ON workout_exercises(workout_id);`,
 		`CREATE INDEX IF NOT EXISTS idx_sets_workout_exercise_id ON sets(workout_exercise_id);`,
+		`CREATE INDEX IF NOT EXISTS idx_blacklisted_tokens_token ON blacklisted_tokens(token);`,
+		`CREATE INDEX IF NOT EXISTS idx_blacklisted_tokens_expiration ON blacklisted_tokens(expiration_time);`,
 	}
 	for _, query := range queries {
 		if _, err := db.Exec(query); err != nil {
@@ -82,12 +91,15 @@ func (s *Storage) DropAllTables() error {
 		`DROP TABLE IF EXISTS workouts;`,
 		`DROP TABLE IF EXISTS allowed_exercises;`,
 		`DROP TABLE IF EXISTS users;`,
+		`DROP TABLE IF EXISTS blacklisted_tokens;`,
 
 		`DROP INDEX IF EXISTS idx_users_username;`,
 		`DROP INDEX IF EXISTS idx_users_email;`,
 		`DROP INDEX IF EXISTS idx_workouts_user_id;`,
 		`DROP INDEX IF EXISTS idx_workout_exercises_workout_id;`,
 		`DROP INDEX IF EXISTS idx_sets_workout_exercise_id;`,
+		`DROP INDEX IF EXISTS idx_blacklisted_tokens_token;`,
+		`DROP INDEX IF EXISTS idx_blacklisted_tokens_expiration;`,
 	}
 	for _, query := range queries {
 		if _, err := s.db.Exec(query); err != nil {

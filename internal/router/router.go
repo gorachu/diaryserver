@@ -23,6 +23,7 @@ func SetupRouter(storage *sqlite.Storage, log *slog.Logger, cfg *config.Config) 
 		)
 		c.Set("logger", reqLogger)
 		c.Set("db", storage)
+		c.Set("cfg", cfg)
 		start := time.Now()
 		c.Next()
 		reqLogger.Info("request completed",
@@ -37,7 +38,7 @@ func SetupRouter(storage *sqlite.Storage, log *slog.Logger, cfg *config.Config) 
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
 		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
 		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
+		MaxAge:           24 * time.Hour,
 	}
 	r.Use(cors.New(corsConfig))
 	r.OPTIONS("/*path", func(c *gin.Context) {

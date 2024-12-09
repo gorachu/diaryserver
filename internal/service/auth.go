@@ -26,13 +26,13 @@ func NewAuthService(storage *sqlite.Storage, accessSecret, refreshSecret string,
 	}
 }
 
-func (s *AuthService) ValidateUser(username, passwordHash string) (*sqlite.UserInfo, error) {
+func (s *AuthService) ValidateUser(username, password string) (*sqlite.UserInfo, error) {
 	user, err := s.storage.GetUser(username)
 	if err != nil {
 		return nil, err
 	}
 
-	if user.PasswordHash != passwordHash {
+	if err := VerifyPassword(user.PasswordHash, password); err != nil {
 		return nil, errors.New("invalid credentials")
 	}
 
@@ -59,6 +59,19 @@ func (s *AuthService) GenerateRefreshToken(userID int64) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(s.refreshSecret))
+}
+func (s *AuthService) GenerateTokens(userID int64) (string, string, error) {
+	accessToken, err := s.GenerateAccessToken(userID)
+	if err != nil {
+		return "", "", err
+	}
+
+	refreshToken, err := s.GenerateRefreshToken(userID)
+	if err != nil {
+		return "", "", err
+	}
+
+	return accessToken, refreshToken, nil
 }
 
 func (s *AuthService) RefreshTokens(refreshToken string) (string, string, error) {
@@ -92,4 +105,48 @@ func (s *AuthService) RefreshTokens(refreshToken string) (string, string, error)
 	}
 
 	return newAccessToken, newRefreshToken, nil
+}
+
+func (s *AuthService) ValidateAccessToken(accessToken string) (int64, error) {
+	token, err := jwt.Parse(accessToken, func(token *jwt.Token) (interface{}, error) {
+		return []byte(s.accessSecret), nil
+	})
+
+	if err != nil || !token.Valid {
+		return 0, errors.New("invalid access token")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return 0, errors.New("invalid token claims")
+	}
+
+	if claims["type"] != "access" {
+		return 0, errors.New("wrong token type")
+	}
+
+	userID := int64(claims["user_id"].(float64))
+	return userID, nil
+}
+
+func (s *AuthService) ValidateRefreshToken(refreshToken string) (int64, error) {
+	token, err := jwt.Parse(refreshToken, func(token *jwt.Token) (interface{}, error) {
+		return []byte(s.refreshSecret), nil
+	})
+
+	if err != nil || !token.Valid {
+		return 0, errors.New("invalid refresh token")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return 0, errors.New("invalid token claims")
+	}
+
+	if claims["type"] != "refresh" {
+		return 0, errors.New("wrong token type")
+	}
+
+	userID := int64(claims["user_id"].(float64))
+	return userID, nil
 }
