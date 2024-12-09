@@ -3,6 +3,7 @@ package router
 import (
 	"diaryserver/internal/config"
 	"diaryserver/internal/router/handlers"
+	"diaryserver/internal/router/middleware"
 	"diaryserver/internal/service"
 	"diaryserver/internal/storage/sqlite"
 	"log/slog"
@@ -41,18 +42,20 @@ func SetupRouter(storage *sqlite.Storage, log *slog.Logger, cfg *config.Config) 
 		MaxAge:           24 * time.Hour,
 	}
 	r.Use(cors.New(corsConfig))
-	r.OPTIONS("/*path", func(c *gin.Context) {
-		if c.Request.Method == "OPTIONS" {
-			c.Header("Access-Control-Allow-Origin", "https://localhost:3000")
-			c.Header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
-			c.Header("Access-Control-Allow-Headers", "Origin,Content-Type,Accept,Authorization,X-Requested-With,Access-Control-Allow-Origin,Access-Control-Allow-Methods,Access-Control-Allow-Headers,Access-Control-Allow-Credentials")
-			c.Header("Access-Control-Allow-Credentials", "true")
-			c.Status(204)
-			return
-		}
-		c.Next()
-	})
+	/*
+		r.OPTIONS("/*path", func(c *gin.Context) {
+			if c.Request.Method == "OPTIONS" {
+				c.Header("Access-Control-Allow-Origin", "https://localhost:3000")
+				c.Header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
+				c.Header("Access-Control-Allow-Headers", "Origin,Content-Type,Accept,Authorization,X-Requested-With,Access-Control-Allow-Origin,Access-Control-Allow-Methods,Access-Control-Allow-Headers,Access-Control-Allow-Credentials")
+				c.Header("Access-Control-Allow-Credentials", "true")
+				c.Status(204)
+				return
+			}
+			c.Next()
+		})*/
 	users := r.Group("/users")
+	users.Use(middleware.AuthMiddleware(storage, cfg.JWT.AccessSecret))
 	{
 		users.GET("", handlers.NewHandlers(storage, log).GetUsers)
 		users.GET("/:username", handlers.NewHandlers(storage, log).GetUser)

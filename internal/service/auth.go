@@ -3,6 +3,7 @@ package service
 import (
 	"diaryserver/internal/storage/sqlite"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -108,12 +109,20 @@ func (s *AuthService) RefreshTokens(refreshToken string) (string, string, error)
 }
 
 func (s *AuthService) ValidateAccessToken(accessToken string) (int64, error) {
+	token2 := accessToken
 	token, err := jwt.Parse(accessToken, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("неожиданный метод подписи: %v, ожидается HS256", token.Header["alg"])
+		}
+
+		if token.Header["alg"] != "HS256" {
+			return nil, fmt.Errorf("неподдерживаемый алгоритм: %v, ожидается HS256", token.Header["alg"])
+		}
 		return []byte(s.accessSecret), nil
 	})
 
 	if err != nil || !token.Valid {
-		return 0, errors.New("invalid access token")
+		return 0, errors.New("invalid access token " + token2)
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
