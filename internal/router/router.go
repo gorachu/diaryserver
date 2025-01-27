@@ -55,7 +55,7 @@ func SetupRouter(storage *sqlite.Storage, log *slog.Logger, cfg *config.Config) 
 			c.Next()
 		})*/
 	users := r.Group("/users")
-	users.Use(middleware.AuthMiddleware(storage, cfg.JWT.AccessSecret))
+	users.Use(middleware.AuthMiddleware(storage, cfg))
 	{
 		users.GET("", handlers.NewHandlers(storage, log).GetUsers)
 		users.GET("/:username", handlers.NewHandlers(storage, log).GetUser)
@@ -71,6 +71,13 @@ func SetupRouter(storage *sqlite.Storage, log *slog.Logger, cfg *config.Config) 
 	login := r.Group("/login")
 	{
 		login.POST("", service.NewAuthService(storage, cfg.JWT.AccessSecret, cfg.JWT.RefreshSecret, cfg.JWT.AccessTokenTTL, cfg.JWT.RefreshTokenTTL).Login)
+	}
+	calendar := r.Group("/calendar")
+	calendar.Use(middleware.AuthMiddleware(storage, cfg))
+	{
+		calendar.GET("", handlers.NewHandlers(storage, log).LoadCalendar)
+		calendar.GET(":date", handlers.NewHandlers(storage, log).LoadTrainings)
+		calendar.POST(":date/:training/new", handlers.NewHandlers(storage, log).CreateTraining)
 	}
 	log.Info("starting HTTPS server",
 		slog.String("port", cfg.TLS.Port),

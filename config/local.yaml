@@ -11,5 +11,5 @@ tls:
 jwt:
   access_secret: "accessSecret"
   refresh_secret: "refreshSecret"
-  access_token_ttl: 15m
-  refresh_token_ttl: 168h
+  access_token_ttl: 5m
+  refresh_token_ttl: 15m
