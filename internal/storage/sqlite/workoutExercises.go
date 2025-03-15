@@ -6,14 +6,14 @@ import (
 )
 
 type WorkoutExercise struct {
-	WorkoutID  int
-	ExerciseID int
+	WorkoutID  int64
+	ExerciseID int64
 }
 
 type WorkoutExerciseInfo struct {
-	WorkoutExerciseID int
-	WorkoutID         int
-	ExerciseID        int
+	WorkoutExerciseID int64
+	WorkoutID         int64
+	ExerciseID        int64
 }
 
 func (s *Storage) AddWorkoutExercise(workoutExercise WorkoutExercise) error {
@@ -127,7 +127,7 @@ func (s *Storage) GetWorkoutExercise(workoutExerciseID int) (*WorkoutExerciseInf
 	return we, nil
 }
 
-func (s *Storage) GetWorkoutExercises(workoutID int) ([]WorkoutExerciseInfo, error) {
+func (s *Storage) GetWorkoutExercises(workoutID int64) ([]WorkoutExerciseInfo, error) {
 	const op = "storage.sqlite.GetWorkoutExercises"
 	query := `SELECT workout_exercise_id, workout_id, exercise_id 
 			 FROM workout_exercises WHERE workout_id = ?

@@ -6,15 +6,21 @@ import (
 )
 
 type Workout struct {
-	UserID int
-	Date   string
-	Notes  string
+	UserID    int64
+	Date      string
+	StartTime string
+	EndTime   string
+	Notes     string
+	Photo     string
 }
 type WorkoutInfo struct {
-	WorkoutID int
-	UserID    int
+	WorkoutID int64
+	UserID    int64
 	Date      string
+	StartTime string
+	EndTime   string
 	Notes     string
+	Photo     string
 }
 
 func (s *Storage) AddWorkout(workout Workout) error {
@@ -22,9 +28,9 @@ func (s *Storage) AddWorkout(workout Workout) error {
 	if workout.UserID == 0 {
 		return fmt.Errorf("%s: user ID is required", op)
 	}
-	query := `INSERT INTO workouts (user_id, date, notes) VALUES (?, ?, ?)`
+	query := `INSERT INTO workouts (user_id, workout_date, workout_start_time, workout_end_time, notes, photo) VALUES (?, ?, ?, ?, ?, ?)`
 
-	_, err := s.db.Exec(query, workout.UserID, workout.Date, workout.Notes)
+	_, err := s.db.Exec(query, workout.UserID, workout.Date, workout.StartTime, workout.EndTime, workout.Notes, workout.Photo)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -41,7 +47,7 @@ func (s *Storage) AddWorkouts(workouts []Workout) error {
 	}
 	defer tx.Rollback()
 
-	query := `INSERT INTO workouts (user_id, date, notes) VALUES (?, ?, ?)`
+	query := `INSERT INTO workouts (user_id, workout_date, workout_start_time, workout_end_time, notes, photo) VALUES (?, ?, ?, ?, ?, ?)`
 	stmt, err := tx.Prepare(query)
 	if err != nil {
 		return fmt.Errorf("%s: failed to prepare statement: %w", op, err)
@@ -52,7 +58,7 @@ func (s *Storage) AddWorkouts(workouts []Workout) error {
 		if workout.UserID == 0 {
 			return fmt.Errorf("%s: user ID is required", op)
 		}
-		_, err := stmt.Exec(workout.UserID, workout.Date, workout.Notes)
+		_, err := stmt.Exec(workout.UserID, workout.Date, workout.StartTime, workout.EndTime, workout.Notes, workout.Photo)
 		if err != nil {
 			return fmt.Errorf("%s: failed to add workout for user %d: %w", op, workout.UserID, err)
 		}
@@ -105,30 +111,10 @@ func (s *Storage) DeleteWorkouts(workoutIDs []int) error {
 
 	return nil
 }
-func (s *Storage) GetWorkout(user_id int, date string) (*WorkoutInfo, error) {
-	const op = "storage.sqlite.GetWorkout"
-	query := `SELECT workout_id, user_id, date, notes 
-			 FROM workouts WHERE user_id = ? AND date = ?`
 
-	workout := &WorkoutInfo{}
-	err := s.db.QueryRow(query, user_id, date).Scan(
-		&workout.WorkoutID,
-		&workout.UserID,
-		&workout.Date,
-		&workout.Notes,
-	)
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("%s: workout not found", op)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-
-	return workout, nil
-}
 func (s *Storage) GetWorkoutFromID(workout_ID int) (*WorkoutInfo, error) {
 	const op = "storage.sqlite.GetWorkout"
-	query := `SELECT workout_id, user_id, date, notes 
+	query := `SELECT workout_id, user_id, date, notes, photo 
 			 FROM workouts WHERE workout_id = ?`
 
 	workout := &WorkoutInfo{}
@@ -148,11 +134,11 @@ func (s *Storage) GetWorkoutFromID(workout_ID int) (*WorkoutInfo, error) {
 	return workout, nil
 }
 
-func (s *Storage) GetWorkouts(userID int) ([]WorkoutInfo, error) {
-	const op = "storage.sqlite.GetWorkouts"
-	query := `SELECT workout_id, user_id, date, notes 
+func (s *Storage) GetAllWorkouts(userID int64) ([]WorkoutInfo, error) {
+	const op = "storage.sqlite.GetAllWorkouts"
+	query := `SELECT workout_id, user_id, workout_date, workout_start_time, workout_end_time, notes, photo 
 			 FROM workouts WHERE user_id = ?
-			 ORDER BY workout_id`
+			 ORDER BY workout_date`
 
 	rows, err := s.db.Query(query, userID)
 	if err != nil {
@@ -167,7 +153,45 @@ func (s *Storage) GetWorkouts(userID int) ([]WorkoutInfo, error) {
 			&workout.WorkoutID,
 			&workout.UserID,
 			&workout.Date,
+			&workout.StartTime,
+			&workout.EndTime,
 			&workout.Notes,
+			&workout.Photo,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", op, err)
+		}
+		workouts = append(workouts, workout)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return workouts, nil
+}
+func (s *Storage) GetWorkoutsFromDate(user_id int64, date string) ([]WorkoutInfo, error) {
+	const op = "storage.sqlite.GetWorkoutsFromDate"
+	query := `SELECT workout_id, user_id, workout_date, workout_start_time, workout_end_time, notes, photo
+				 FROM workouts WHERE user_id = ? AND workout_date = ? 
+				 ORDER BY workout_id`
+
+	rows, err := s.db.Query(query, user_id, date)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	defer rows.Close()
+
+	var workouts []WorkoutInfo
+	for rows.Next() {
+		var workout WorkoutInfo
+		err := rows.Scan(
+			&workout.WorkoutID,
+			&workout.UserID,
+			&workout.Date,
+			&workout.StartTime,
+			&workout.EndTime,
+			&workout.Notes,
+			&workout.Photo,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", op, err)

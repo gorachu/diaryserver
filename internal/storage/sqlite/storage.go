@@ -39,8 +39,11 @@ func New(storagePath string) (*Storage, error) {
 		`CREATE TABLE IF NOT EXISTS workouts (
 			workout_id INTEGER PRIMARY KEY AUTOINCREMENT,
 			user_id INTEGER NOT NULL,
-			date DATETIME DEFAULT CURRENT_TIMESTAMP,
+			workout_date TEXT DEFAULT (DATE('now')),
+			workout_start_time TEXT DEFAULT (TIME('now')),
+			workout_end_time TEXT,
 			notes TEXT,
+			photo TEXT,
 			FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 		);`,
 

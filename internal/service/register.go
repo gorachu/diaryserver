@@ -43,7 +43,8 @@ func (AuthService *AuthService) Register(c *gin.Context) {
 	}
 	logger.Debug("received registration data",
 		"username", request.User.Username,
-		"email", request.User.Email)
+		"email", request.User.Email,
+		"pass", request.User.Password)
 	hashedPassword, err := HashPassword(request.User.Password)
 	if err != nil {
 		logger.Error("failed to hash password", "error", err)

@@ -100,13 +100,13 @@ func (s *Storage) DeleteAllowedExercises(names []string) error {
 	return nil
 }
 
-func (s *Storage) GetAllowedExercise(name string) (AllowedExerciseInfo, error) {
+func (s *Storage) GetAllowedExercise(id int64) (AllowedExerciseInfo, error) {
 	const op = "storage.sqlite.GetAllowedExercise"
 
-	query := `SELECT exercise_id, name, description FROM allowed_exercises WHERE name = ?`
+	query := `SELECT exercise_id, name, description FROM allowed_exercises WHERE exercise_id = ?`
 
 	var exercise AllowedExerciseInfo
-	err := s.db.QueryRow(query, name).Scan(&exercise.ID, &exercise.Name, &exercise.Description)
+	err := s.db.QueryRow(query, id).Scan(&exercise.ID, &exercise.Name, &exercise.Description)
 	if err != nil {
 		return AllowedExerciseInfo{}, fmt.Errorf("%s: %w", op, err)
 	}

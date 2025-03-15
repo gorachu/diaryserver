@@ -10,61 +10,121 @@ import (
 func (h *Handler) LoadCalendar(c *gin.Context) {
 	logger := c.MustGet("logger").(*slog.Logger)
 	logger.Debug("handling load user requeset")
-	type CustomData struct {
-		Key       string   `json:"key"`
-		Trainings []string `json:"trainings"`
+	user_ID_Object, successful := c.Get("user_id")
+	if !successful {
+		logger.Error("User id not found")
+		c.JSON(400, gin.H{"error": "User id not found"})
+		return
+	}
+	user_ID, ok := user_ID_Object.(int64)
+	if !ok {
+		logger.Error("User id is not integer")
+		c.JSON(400, gin.H{"error": "User id is not integer"})
+		return
+	}
+	workoutsInfo, err := h.storage.GetAllWorkouts(user_ID)
+	if err != nil {
+		logger.Error("Internal server error while accessing the DB", "error", err)
+		c.JSON(500, gin.H{"error": "Internal server error"})
+		return
+	}
+	type WorkoutTimings struct {
+		StartTime string `json:"startTime"`
+		EndTime   string `json:"endTime"`
+	}
+	type Day struct {
+		Date            string           `json:"date"`
+		WorkoutsTimings []WorkoutTimings `json:"workoutsTimings"`
 	}
 	type Request struct {
-		Data       []string     `json:"data"`
-		CustomData []CustomData `json:"customData"`
+		Days []Day `json:"days"`
 	}
-	request := Request{
-		Data: []string{"2025-01-01", "2025-01-02"},
-		CustomData: []CustomData{
-			{
-				Key:       "2025-01-01",
-				Trainings: []string{"09:00 - 10:30", "16:00 - 17:00"},
-			},
-			{
-				Key:       "2025-01-02",
-				Trainings: []string{"09:01 - 10:31", "16:01 - 17:01"},
-			},
-		},
+	var request Request
+	workoutsGrouped := make(map[string][]WorkoutTimings)
+	for _, workout := range workoutsInfo {
+		workoutsGrouped[workout.Date] = append(workoutsGrouped[workout.Date], WorkoutTimings{
+			StartTime: workout.StartTime,
+			EndTime:   workout.EndTime,
+		})
 	}
+
+	for date, workoutList := range workoutsGrouped {
+		request.Days = append(request.Days, Day{
+			Date:            date,
+			WorkoutsTimings: workoutList,
+		})
+	}
+
 	c.JSON(200, request)
 }
 
 func (h *Handler) LoadTrainings(c *gin.Context) {
 	logger := c.MustGet("logger").(*slog.Logger)
 	logger.Debug("handling load trainings requeset")
-
+	user_ID_Object, successful := c.Get("user_id")
+	if !successful {
+		logger.Error("User id not found")
+		c.JSON(400, gin.H{"error": "User id not found"})
+		return
+	}
+	user_ID, ok := user_ID_Object.(int64)
+	if !ok {
+		logger.Error("User id is not integer")
+		c.JSON(400, gin.H{"error": "User id is not integer"})
+		return
+	}
 	date := c.Param("date")
 	if date == "" {
 		logger.Error("date is required")
 		c.JSON(400, gin.H{"error": "date is required"})
 		return
+
+	}
+	type WorkoutExercises struct {
+		WorkoutExerciseID int64  `json:"workoutExerciseId"`
+		ExerciseName      string `json:"exerciseName"`
 	}
 	type TrainingsInDay struct {
-		Time     string   `json:"time"`
-		Duration string   `json:"duration"`
-		Sets     []string `json:"sets"`
+		Date             string             `json:"date"`
+		StartTime        string             `json:"timeStart"`
+		EndTime          string             `json:"timeEnd"`
+		WorkoutExercises []WorkoutExercises `json:"workoutExercises"`
 	}
 	type Request struct {
 		TrainingsInDay []TrainingsInDay `json:"trainingsInDay"`
 	}
-	request := Request{
-		TrainingsInDay: []TrainingsInDay{
-			{
-				Time:     "7:00",
-				Duration: "1h2m",
-				Sets:     []string{"1 set", "2 set"},
-			},
-			{
-				Time:     "18:00",
-				Duration: "1h30m",
-				Sets:     []string{"1 set", "2 set"},
-			},
-		},
+	workoutsInfo, err := h.storage.GetWorkoutsFromDate(user_ID, date)
+	if err != nil {
+		logger.Error("Internal server error while accessing the DB", "error", err)
+		c.JSON(500, gin.H{"error": "Internal server error"})
+		return
+	}
+	var request Request
+	for _, workout := range workoutsInfo {
+		training := TrainingsInDay{
+			Date:      workout.Date,
+			StartTime: workout.StartTime,
+			EndTime:   workout.EndTime,
+		}
+		exercises, err := h.storage.GetWorkoutExercises(workout.WorkoutID)
+		if err != nil {
+			logger.Error("Internal server error while accessing the DB", "error", err)
+			c.JSON(500, gin.H{"error": "Internal server error"})
+			return
+		}
+		for _, exercise := range exercises {
+			allowedExercise, err := h.storage.GetAllowedExercise(exercise.ExerciseID)
+			if err != nil {
+				logger.Error("Internal server error while accessing the DB", "error", err)
+				c.JSON(500, gin.H{"error": "Internal server error"})
+				return
+			}
+			training.WorkoutExercises = append(training.WorkoutExercises, WorkoutExercises{
+				WorkoutExerciseID: exercise.WorkoutExerciseID,
+				ExerciseName:      allowedExercise.Name,
+			})
+		}
+		request.TrainingsInDay = append(request.TrainingsInDay, training)
 	}
 	c.JSON(200, request)
 }
@@ -77,16 +137,16 @@ func (h *Handler) CreateTraining(c *gin.Context) {
 		c.JSON(400, gin.H{"error": "User id not found"})
 		return
 	}
-
-	user_ID, ok := user_ID_Object.(int)
+	user_ID, ok := user_ID_Object.(int64)
 	if !ok {
 		logger.Error("User id is not integer")
 		c.JSON(400, gin.H{"error": "User id is not integer"})
 		return
 	}
 	type Workout struct {
-		Date string `json:"date"`
-		Note string `json:"note"`
+		Date  string `json:"date"`
+		Note  string `json:"note"`
+		Photo string `json:"photo"`
 	}
 	var workout_temp Workout
 	if err := c.ShouldBindJSON(&workout_temp); err != nil {
@@ -98,6 +158,7 @@ func (h *Handler) CreateTraining(c *gin.Context) {
 		UserID: user_ID,
 		Date:   workout_temp.Date,
 		Notes:  workout_temp.Note,
+		Photo:  workout_temp.Photo,
 	}
 	if err := h.storage.AddWorkout(workout); err != nil {
 		logger.Error("failed to create workout", "error", err)
