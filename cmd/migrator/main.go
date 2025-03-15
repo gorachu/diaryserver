@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"log"
 
 	// Библиотека для миграций
 	"github.com/golang-migrate/migrate/v4"
@@ -19,6 +20,7 @@ func main() {
 	flag.StringVar(&storagePath, "storage-path", "", "path to storage")
 	flag.StringVar(&migrationsPath, "migrations-path", "", "path to migrations")
 	flag.Parse()
+	fmt.Printf("%s   %s", storagePath, migrationsPath)
 
 	if storagePath == "" {
 		panic("storage-path is required")
@@ -32,6 +34,7 @@ func main() {
 		fmt.Sprintf("sqlite3://%s", storagePath),
 	)
 	if err != nil {
+		log.Fatalf("Failed to initialize migrations: %v", err)
 		panic(err)
 	}
 
