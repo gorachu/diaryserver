@@ -6,15 +6,15 @@ import (
 )
 
 type Set struct {
-	WorkoutExerciseID int
+	WorkoutExerciseID int64
 	Repetitions       int
 	Weight            float64
 }
 type SetInfo struct {
-	SetID             int
-	WorkoutExerciseID int
-	Repetitions       int
-	Weight            float64
+	SetID             int64   `json:"setId"`
+	WorkoutExerciseID int64   `json:"workoutExerciseId"`
+	Repetitions       int     `json:"repetitions"`
+	Weight            float64 `json:"weight"`
 }
 
 func (s *Storage) AddSet(set Set) error {
@@ -66,7 +66,7 @@ func (s *Storage) AddSets(sets []Set) error {
 
 	return nil
 }
-func (s *Storage) DeleteSet(setID int) error {
+func (s *Storage) DeleteSet(setID int64) error {
 	const op = "storage.sqlite.DeleteSet"
 	query := `DELETE FROM sets WHERE set_id = ?`
 
@@ -78,7 +78,7 @@ func (s *Storage) DeleteSet(setID int) error {
 	return nil
 }
 
-func (s *Storage) DeleteSets(setIDs []int) error {
+func (s *Storage) DeleteSets(setIDs []int64) error {
 	const op = "storage.sqlite.DeleteSets"
 
 	tx, err := s.db.Begin()
@@ -107,7 +107,7 @@ func (s *Storage) DeleteSets(setIDs []int) error {
 
 	return nil
 }
-func (s *Storage) GetSet(setID int) (*SetInfo, error) {
+func (s *Storage) GetSet(setID int64) (*SetInfo, error) {
 	const op = "storage.sqlite.GetSet"
 	query := `SELECT set_id, workout_exercise_id, repetitions, weight 
 			 FROM sets WHERE set_id = ?`
@@ -129,7 +129,7 @@ func (s *Storage) GetSet(setID int) (*SetInfo, error) {
 	return set, nil
 }
 
-func (s *Storage) GetSets(workoutExerciseID int) ([]SetInfo, error) {
+func (s *Storage) GetSets(workoutExerciseID int64) ([]SetInfo, error) {
 	const op = "storage.sqlite.GetSets"
 	query := `SELECT set_id, workout_exercise_id, repetitions, weight 
 			 FROM sets WHERE workout_exercise_id = ?

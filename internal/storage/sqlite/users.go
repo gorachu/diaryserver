@@ -15,6 +15,7 @@ type UserInfo struct {
 	Username     string
 	Email        string
 	PasswordHash string
+	CreatedAt    string
 }
 
 func (s *Storage) AddUser(user User) error {
@@ -127,7 +128,7 @@ func (s *Storage) GetUser(username string) (*UserInfo, error) {
 func (s *Storage) GetUsers() ([]UserInfo, error) {
 	const op = "storage.sqlite.GetUsers"
 
-	query := `SELECT user_id, username, email, password_hash FROM users`
+	query := `SELECT user_id, username, email, password_hash, created_at FROM users`
 
 	rows, err := s.db.Query(query)
 	if err != nil {
@@ -138,7 +139,7 @@ func (s *Storage) GetUsers() ([]UserInfo, error) {
 	var users []UserInfo
 	for rows.Next() {
 		var user UserInfo
-		err := rows.Scan(&user.UserID, &user.Username, &user.Email, &user.PasswordHash)
+		err := rows.Scan(&user.UserID, &user.Username, &user.Email, &user.PasswordHash, &user.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", op, err)
 		}

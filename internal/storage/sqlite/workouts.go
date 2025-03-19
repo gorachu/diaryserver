@@ -70,7 +70,7 @@ func (s *Storage) AddWorkouts(workouts []Workout) error {
 
 	return nil
 }
-func (s *Storage) DeleteWorkout(workoutID int) error {
+func (s *Storage) DeleteWorkout(workoutID int64) error {
 	const op = "storage.sqlite.DeleteWorkout"
 	query := `DELETE FROM workouts WHERE workout_id = ?`
 
@@ -82,7 +82,7 @@ func (s *Storage) DeleteWorkout(workoutID int) error {
 	return nil
 }
 
-func (s *Storage) DeleteWorkouts(workoutIDs []int) error {
+func (s *Storage) DeleteWorkouts(workoutIDs []int64) error {
 	const op = "storage.sqlite.DeleteWorkouts"
 
 	tx, err := s.db.Begin()
@@ -112,9 +112,9 @@ func (s *Storage) DeleteWorkouts(workoutIDs []int) error {
 	return nil
 }
 
-func (s *Storage) GetWorkoutFromID(workout_ID int) (*WorkoutInfo, error) {
-	const op = "storage.sqlite.GetWorkout"
-	query := `SELECT workout_id, user_id, date, notes, photo 
+func (s *Storage) GetWorkoutFromID(workout_ID int64) (*WorkoutInfo, error) {
+	const op = "storage.sqlite.GetWorkoutFromId"
+	query := `SELECT workout_id, user_id, workout_date, workout_start_time, workout_end_time, notes, photo  
 			 FROM workouts WHERE workout_id = ?`
 
 	workout := &WorkoutInfo{}
@@ -122,7 +122,10 @@ func (s *Storage) GetWorkoutFromID(workout_ID int) (*WorkoutInfo, error) {
 		&workout.WorkoutID,
 		&workout.UserID,
 		&workout.Date,
+		&workout.StartTime,
+		&workout.EndTime,
 		&workout.Notes,
+		&workout.Photo,
 	)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("%s: workout not found", op)

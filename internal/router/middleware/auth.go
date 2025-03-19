@@ -16,7 +16,6 @@ func AuthMiddleware(storage *sqlite.Storage, cfg *config.Config) gin.HandlerFunc
 		logger := c.MustGet("logger").(*slog.Logger)
 		logger.Debug("checking authentication")
 		accessToken, err := c.Cookie("access_token")
-		logger.Debug("accessToken from cookie", "accessToken", accessToken)
 		authService := service.NewAuthService(
 			storage,
 			cfg.JWT.AccessSecret,

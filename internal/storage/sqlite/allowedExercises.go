@@ -7,9 +7,9 @@ type AllowedExercise struct {
 	Description string
 }
 type AllowedExerciseInfo struct {
-	ID          int64
-	Name        string
-	Description string
+	AllowedExerciseId int64  `json:"allowedExerciseId"`
+	Name              string `json:"name"`
+	Description       string `json:"description"`
 }
 
 func (s *Storage) AddAllowedExercise(exercise AllowedExercise) error {
@@ -106,7 +106,7 @@ func (s *Storage) GetAllowedExercise(id int64) (AllowedExerciseInfo, error) {
 	query := `SELECT exercise_id, name, description FROM allowed_exercises WHERE exercise_id = ?`
 
 	var exercise AllowedExerciseInfo
-	err := s.db.QueryRow(query, id).Scan(&exercise.ID, &exercise.Name, &exercise.Description)
+	err := s.db.QueryRow(query, id).Scan(&exercise.AllowedExerciseId, &exercise.Name, &exercise.Description)
 	if err != nil {
 		return AllowedExerciseInfo{}, fmt.Errorf("%s: %w", op, err)
 	}
@@ -128,7 +128,7 @@ func (s *Storage) GetAllowedExercises() ([]AllowedExerciseInfo, error) {
 	var exercises []AllowedExerciseInfo
 	for rows.Next() {
 		var exercise AllowedExerciseInfo
-		if err := rows.Scan(&exercise.ID, &exercise.Name, &exercise.Description); err != nil {
+		if err := rows.Scan(&exercise.AllowedExerciseId, &exercise.Name, &exercise.Description); err != nil {
 			return nil, fmt.Errorf("%s: %w", op, err)
 		}
 		exercises = append(exercises, exercise)
