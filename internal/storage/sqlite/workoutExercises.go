@@ -68,7 +68,7 @@ func (s *Storage) AddWorkoutExercises(workoutExercises []WorkoutExercise) error 
 	return nil
 }
 
-func (s *Storage) DeleteWorkoutExercise(workoutExerciseID int) error {
+func (s *Storage) DeleteWorkoutExercise(workoutExerciseID int64) error {
 	const op = "storage.sqlite.DeleteWorkoutExercise"
 	query := `DELETE FROM workout_exercises WHERE workout_exercise_id = ?`
 
@@ -80,7 +80,7 @@ func (s *Storage) DeleteWorkoutExercise(workoutExerciseID int) error {
 	return nil
 }
 
-func (s *Storage) DeleteWorkoutExercises(workoutExerciseIDs []int) error {
+func (s *Storage) DeleteWorkoutExercises(workoutExerciseIDs []int64) error {
 	const op = "storage.sqlite.DeleteWorkoutExercises"
 
 	tx, err := s.db.Begin()
@@ -110,7 +110,7 @@ func (s *Storage) DeleteWorkoutExercises(workoutExerciseIDs []int) error {
 	return nil
 }
 
-func (s *Storage) GetWorkoutExercise(workoutExerciseID int) (*WorkoutExerciseInfo, error) {
+func (s *Storage) GetWorkoutExercise(workoutExerciseID int64) (*WorkoutExerciseInfo, error) {
 	const op = "storage.sqlite.GetWorkoutExercise"
 	query := `SELECT workout_exercise_id, workout_id, exercise_id 
 			 FROM workout_exercises WHERE workout_exercise_id = ?`

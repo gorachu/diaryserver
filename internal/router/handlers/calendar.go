@@ -241,7 +241,6 @@ func (h *Handler) LoadTrainingSingle(c *gin.Context) {
 		c.JSON(500, gin.H{"error": "Internal server error"})
 		return
 	}
-	logger.Debug("cheking!!!!", "exerciseID", exercises)
 	for _, exercise := range exercises {
 		allowedExercise, err := h.storage.GetAllowedExercise(exercise.ExerciseID)
 		if err != nil {
@@ -256,7 +255,6 @@ func (h *Handler) LoadTrainingSingle(c *gin.Context) {
 			c.JSON(500, gin.H{"error": "Internal server error"})
 			return
 		}
-		logger.Debug("cheking!!!!", "exerciseID", int64(exercise.ExerciseID), "sets:", sets)
 		training.WorkoutExercises = append(training.WorkoutExercises, WorkoutExercises{
 			WorkoutExerciseID: exercise.WorkoutExerciseID,
 			ExerciseName:      allowedExercise.Name,
@@ -341,4 +339,58 @@ func (h *Handler) CreateSets(c *gin.Context) {
 		return
 	}
 	c.JSON(201, sets)
+}
+func (h *Handler) DeleteExercise(c *gin.Context) {
+	logger := c.MustGet("logger").(*slog.Logger)
+	logger.Debug("handling DeleteExercise")
+	user_ID_Object, successful := c.Get("user_id")
+	if !successful {
+		logger.Error("User id not found")
+		c.JSON(400, gin.H{"error": "User id not found"})
+		return
+	}
+	user_ID, ok := user_ID_Object.(int64)
+	if !ok {
+		logger.Error("User id is not integer")
+		c.JSON(400, gin.H{"error": "User id is not integer"})
+		return
+	}
+	workoutIdStr := c.Param("workoutId")
+	if workoutIdStr == "" {
+		logger.Error("workoutId is required")
+		c.JSON(400, gin.H{"error": "WorkoutId is required"})
+		return
+	}
+	workoutId, err := strconv.ParseInt(workoutIdStr, 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{"error": "Invalid workoutId, must be an integer"})
+		return
+	}
+	workoutInfo, err := h.storage.GetWorkoutFromID(workoutId)
+	if err != nil {
+		logger.Error("Internal server error while accessing the DB", "error", err)
+		c.JSON(500, gin.H{"error": "Internal server error"})
+		return
+	}
+	if workoutInfo.UserID != user_ID {
+		logger.Error("Access Denied")
+		c.JSON(403, gin.H{"error": "Access Denied"})
+		return
+	}
+	type Exercise struct {
+		Sets              []sqlite.SetInfo `json:"sets"`
+		WorkoutExerciseId int64            `json:"workoutExerciseId"`
+	}
+	var exerciseInfo Exercise
+	if err := c.ShouldBindJSON(&exerciseInfo); err != nil {
+		logger.Error("invalid request body", "error", err)
+		c.JSON(400, gin.H{"error": "invalid request body"})
+		return
+	}
+	if err := h.storage.DeleteWorkoutExercise(exerciseInfo.WorkoutExerciseId); err != nil {
+		logger.Error("Internal server error", "error", err)
+		c.JSON(500, gin.H{"error": "Internal server error"})
+		return
+	}
+	c.JSON(200, exerciseInfo)
 }
