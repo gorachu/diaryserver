@@ -161,3 +161,38 @@ func (s *Storage) GetSets(workoutExerciseID int64) ([]SetInfo, error) {
 
 	return sets, nil
 }
+func (s *Storage) ReplaceSets(workoutExerciseID int64, sets []SetInfo) error {
+	const op = "storage.sqlite.ReplaceSets"
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return fmt.Errorf("%s: failed to begin transaction: %w", op, err)
+	}
+	defer tx.Rollback()
+
+	queryDelete := `DELETE FROM sets WHERE workout_exercise_id = ? AND set_id IS NOT NULL`
+	_, err = tx.Exec(queryDelete, workoutExerciseID)
+	if err != nil {
+		return fmt.Errorf("%s: failed to delete existing sets: %w", op, err)
+	}
+
+	queryInsert := `INSERT INTO sets (workout_exercise_id, repetitions, weight) VALUES (?, ?, ?)`
+	stmt, err := tx.Prepare(queryInsert)
+	if err != nil {
+		return fmt.Errorf("%s: failed to prepare insert statement: %w", op, err)
+	}
+	defer stmt.Close()
+
+	for _, set := range sets {
+		_, err := stmt.Exec(workoutExerciseID, set.Repetitions, set.Weight)
+		if err != nil {
+			return fmt.Errorf("%s: failed to insert set: %w", op, err)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("%s: failed to commit transaction: %w", op, err)
+	}
+
+	return nil
+}
