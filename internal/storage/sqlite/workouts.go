@@ -3,6 +3,7 @@ package sqlite
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 )
 
 type Workout struct {
@@ -14,13 +15,13 @@ type Workout struct {
 	Photo     string
 }
 type WorkoutInfo struct {
-	WorkoutID int64
-	UserID    int64
-	Date      string
-	StartTime string
-	EndTime   string
-	Notes     string
-	Photo     string
+	WorkoutID int64  `json:"workoutId"`
+	UserID    int64  `json:"userId"`
+	Date      string `json:"date"`
+	StartTime string `json:"startTime"`
+	EndTime   string `json:"endTime"`
+	Notes     string `json:"notes"`
+	Photo     string `json:"photo"`
 }
 
 func (s *Storage) AddWorkout(workout Workout) error {
@@ -206,4 +207,29 @@ func (s *Storage) GetWorkoutsFromDate(user_id int64, date string) ([]WorkoutInfo
 	}
 
 	return workouts, nil
+}
+func (s *Storage) PartialUpdateWorkout(workoutID int64, updates map[string]any) error {
+	if len(updates) == 0 {
+		return nil
+	}
+	// 	UPDATE workouts
+	// 	SET field1 = $1, field2 = $2, ...
+	// 	WHERE workoutID = $N
+	query := "UPDATE workouts SET "
+	args := make([]any, 0, len(updates)+1)
+	i := 1
+
+	setParts := make([]string, 0, len(updates))
+	for field, value := range updates {
+		setParts = append(setParts, fmt.Sprintf("%s = $%d", field, i))
+		args = append(args, value)
+		i++
+	}
+
+	query += strings.Join(setParts, ", ")
+	query += fmt.Sprintf(" WHERE workout_id = $%d", i)
+	args = append(args, workoutID)
+
+	_, err := s.db.Exec(query, args...)
+	return err
 }
