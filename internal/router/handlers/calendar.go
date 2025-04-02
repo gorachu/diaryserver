@@ -148,22 +148,21 @@ func (h *Handler) CreateTraining(c *gin.Context) {
 		c.JSON(400, gin.H{"error": "User id is not integer"})
 		return
 	}
-	type Workout struct {
-		Date  string `json:"date"`
-		Note  string `json:"note"`
-		Photo string `json:"photo"`
-	}
-	var setInfo Workout
+
+	var setInfo sqlite.Workout
+	logger.Debug("log:", "w", setInfo)
 	if err := c.ShouldBindJSON(&setInfo); err != nil {
 		logger.Error("invalid request body", "error", err)
 		c.JSON(400, gin.H{"error": "invalid request body"})
 		return
 	}
 	var workout = sqlite.Workout{
-		UserID: user_ID,
-		Date:   setInfo.Date,
-		Notes:  setInfo.Note,
-		Photo:  setInfo.Photo,
+		UserID:    user_ID,
+		Date:      setInfo.Date,
+		StartTime: setInfo.StartTime,
+		EndTime:   setInfo.EndTime,
+		Notes:     setInfo.Notes,
+		Photo:     setInfo.Photo,
 	}
 	if err := h.storage.AddWorkout(workout); err != nil {
 		logger.Error("failed to create workout", "error", err)

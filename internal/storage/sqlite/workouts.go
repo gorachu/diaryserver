@@ -7,12 +7,12 @@ import (
 )
 
 type Workout struct {
-	UserID    int64
-	Date      string
-	StartTime string
-	EndTime   string
-	Notes     string
-	Photo     string
+	UserID    int64  `json:"userId"`
+	Date      string `json:"date"`
+	StartTime string `json:"startTime"`
+	EndTime   string `json:"endTime"`
+	Notes     string `json:"notes"`
+	Photo     string `json:"photo"`
 }
 type WorkoutInfo struct {
 	WorkoutID int64  `json:"workoutId"`
