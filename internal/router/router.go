@@ -83,7 +83,7 @@ func SetupRouter(storage *sqlite.Storage, log *slog.Logger, cfg *config.Config) 
 		calendar.DELETE("/:date/:workoutId/exercise", handlers.NewHandlers(storage, log).DeleteExercise)
 		calendar.PUT("/:date/:workoutId/:exerciseId", handlers.NewHandlers(storage, log).ChangeExercise)
 		calendar.PATCH("/workouts/:workoutId", handlers.NewHandlers(storage, log).ChangeWorkoutInfo)
-
+		calendar.DELETE("/workouts/:workoutId", handlers.NewHandlers(storage, log).DeleteWorkout)
 	}
 	log.Info("starting HTTPS server",
 		slog.String("port", cfg.TLS.Port),

@@ -531,13 +531,13 @@ func (h *Handler) ChangeWorkoutInfo(c *gin.Context) {
 func getChangedFields(original, updated sqlite.WorkoutInfo) map[string]interface{} {
 	changes := make(map[string]interface{})
 	if updated.Date != "" && updated.Date != original.Date {
-		changes["date"] = updated.Date
+		changes["workout_date"] = updated.Date
 	}
 	if updated.StartTime != "" && updated.StartTime != original.StartTime {
-		changes["time_start"] = updated.StartTime
+		changes["workout_start_time "] = updated.StartTime
 	}
 	if updated.EndTime != "" && updated.EndTime != original.EndTime {
-		changes["time_end"] = updated.EndTime
+		changes["workout_end_time"] = updated.EndTime
 	}
 	if updated.Notes != original.Notes {
 		changes["notes"] = updated.Notes
@@ -546,4 +546,49 @@ func getChangedFields(original, updated sqlite.WorkoutInfo) map[string]interface
 		changes["photo"] = updated.Photo
 	}
 	return changes
+}
+func (h *Handler) DeleteWorkout(c *gin.Context) {
+	logger := c.MustGet("logger").(*slog.Logger)
+	logger.Debug("handling DeleteWorkout")
+	user_ID_Object, successful := c.Get("user_id")
+	if !successful {
+		logger.Error("User id not found")
+		c.JSON(400, gin.H{"error": "User id not found"})
+		return
+	}
+	user_ID, ok := user_ID_Object.(int64)
+	if !ok {
+		logger.Error("User id is not integer")
+		c.JSON(400, gin.H{"error": "User id is not integer"})
+		return
+	}
+	workoutIdStr := c.Param("workoutId")
+	if workoutIdStr == "" {
+		logger.Error("workoutId is required")
+		c.JSON(400, gin.H{"error": "WorkoutId is required"})
+		return
+	}
+	workoutId, err := strconv.ParseInt(workoutIdStr, 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{"error": "Invalid workoutId, must be an integer"})
+		return
+	}
+	workoutInfo, err := h.storage.GetWorkoutFromID(workoutId)
+	if err != nil {
+		logger.Error("Internal server error while accessing the DB", "error", err)
+		c.JSON(500, gin.H{"error": "Internal server error"})
+		return
+	}
+	if workoutInfo.UserID != user_ID {
+		logger.Error("Access Denied")
+		c.JSON(403, gin.H{"error": "Access Denied"})
+		return
+	}
+
+	if err = h.storage.DeleteWorkout(workoutId); err != nil {
+		logger.Error("Internal server error while accessing the DB", "error", err)
+		c.JSON(500, gin.H{"error": "Internal server error"})
+		return
+	}
+	c.JSON(200, workoutInfo)
 }
