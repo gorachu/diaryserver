@@ -41,10 +41,6 @@ func (AuthService *AuthService) Register(c *gin.Context) {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	logger.Debug("received registration data",
-		"username", request.User.Username,
-		"email", request.User.Email,
-		"pass", request.User.Password)
 	hashedPassword, err := HashPassword(request.User.Password)
 	if err != nil {
 		logger.Error("failed to hash password", "error", err)

@@ -1,4 +1,4 @@
 config/certs/cert.pem
 config/certs/key.pem
 config/certs/cert.crt
-strorage/
+storage/
